@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+pragma solidity ^0.8.0;
 
 contract Ballot{
     // Variables
@@ -26,31 +26,73 @@ contract Ballot{
 
     //mapping to find our vote and list of our vote
     mapping(uint => vote) private votes;
-    mapping(uint => voter) public voterRegister;
+    mapping(address => voter) public voterRegister;
 
     // created a state of our ballot at any point
     enum State{ created, voting, ended}
     State public state;
 
     // modifiers
+    
+    modifier condition(bool _condition){
+        require(_condition);
+        _;
+    }
+
+    modifier onlyOffical(){
+        require(msg.sender == ballotOfficalAddress);
+        _;
+    }
+
+    modifier inState(State _state){
+        require(state == _state);
+        _;
+    }
 
     // events
 
     // functions
 
-    constructor(){
+    constructor(
+        string memory _ballotOfficalName,
+        string memory _proposal
+    )
+    {
+        ballotOfficalAddress = msg.sender;
+        ballotOfficalName = _ballotOfficalName;
+        proposal = _proposal;
 
+        state = State.created;
     }
 
-    function addVoter(){
-
+    function addVoter(address _voterAddress, string memory _voterName) public inState(State.created) onlyOffical {
+        voter memory v;
+        v.voterName = _voterName;
+        v.voted = false;
+        voterRegister[_voterAddress] =v;
+        totalVoters++;
     }
 
-    function startVote(){
-
+    function startVote() public inState(State.created) onlyOffical{
+        state = State.voting;
     }
 
-    function doVote(){
+    function doVote(bool _choice) public inState(State.voting) returns(bool voted){
+        bool found = false;
+
+        if(voterRegister[msg.sender].voterName.length != 0 && !voterRegister[msg.sender].voted){
+            voterRegister[msg.sender].voted = true;
+            vote memory v;
+            v.voteAddress = msg.sender;
+            v.choice = _choice;
+            if(_choice) {
+                countResult++;
+            }
+            votes[totalVoters] = v;
+            totalVoters++;
+            found = true;
+        }
+        return found;
 
     }
 
