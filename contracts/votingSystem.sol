@@ -80,7 +80,7 @@ contract Ballot{
     function doVote(bool _choice) public inState(State.voting) returns(bool voted){
         bool found = false;
 
-        if(voterRegister[msg.sender].voterName.length != 0 && !voterRegister[msg.sender].voted){
+        if(bytes(voterRegister[msg.sender].voterName).length !=0  && !voterRegister[msg.sender].voted){
             voterRegister[msg.sender].voted = true;
             vote memory v;
             v.voteAddress = msg.sender;
@@ -96,8 +96,9 @@ contract Ballot{
 
     }
 
-    function endVote(){
-
+    function endVote() public inState(State.voting) onlyOffical{
+        state = State.ended;
+        finalResult = countResult;
     }
 }
 
